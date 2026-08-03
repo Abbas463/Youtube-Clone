@@ -1,0 +1,21 @@
+[project]
+name = "youtube"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Abbas Hilal", email = "168707838+Abbas463@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0.7",
+    "imagekitio>=5.8.0",
+    "python-dotenv>=1.2.2",
+]
+
+[project.scripts]
+youtube = "youtube:main"
+
+[build-system]
+requires = ["uv_build>=0.12.1,<0.13.0"]
+build-backend = "uv_build"
