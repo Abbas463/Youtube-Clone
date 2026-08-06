@@ -1,10 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+from .imagekit_client import (
+    get_optimized_video_url, get_streaming_url, get_thumbnail_url, add_image_watermark
+)
 
-# Create your models here.
 
 class Video(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="videos")
     title = models.CharField(max_length=120)
     description = models.TextField(blank=True)
 
@@ -20,7 +22,52 @@ class Video(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.title
+
+    @property
+    def display_thumbnail_url(self):
+        if self.thumbnail_url and "/thumbnails/" in self.thumbnail_url:
+            return add_image_watermark(self.thumbnail_url, self.user.username)
+        return self.generated_thumbnail_url
+
+    @property
+    def generated_thumbnail_url(self):
+        if not self.video_url:
+            return ""
+        return get_thumbnail_url(self.video_url, self.user.username)
+
+    @property
+    def streaming_url(self):
+        if not self.video_url:
+            return ""
+        return get_streaming_url(self.video_url)
+
+    @property
+    def optimized_url(self):
+        if not self.video_url:
+            return ""
+        return get_optimized_video_url(self.video_url)
+
+
+class VideoLike(models.Model):
+    LIKE = 1
+    DISLIKE = -1
+    LIKE_CHOICES = [
+        (LIKE, "Like"),
+        (DISLIKE, "Dislike")
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="user_likes")
+    value = models.SmallIntegerField(choices=LIKE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["user", "video"]
+
+    def __str__(self):
+        action = "liked" if self.value == self.LIKE else "disliked"
+        return f"{self.user.username} {action} {self.video.title}"
