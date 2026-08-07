@@ -39,6 +39,17 @@
     background: #000;
 }
 
+.no-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
 .play-icon {
     position: absolute;
     top: 50%;
@@ -158,6 +169,13 @@
 .vote-btn.active {
     background: var(--accent-red);
     border-color: var(--accent-red);
+}
+
+.vote-stats {
+    display: flex;
+    gap: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .video-channel {

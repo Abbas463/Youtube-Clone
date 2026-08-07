@@ -5,7 +5,6 @@ from django.views.decorators.http import require_POST
 
 from .models import Video, VideoLike
 from .forms import VideoUploadForm
-from .imagekit_client import upload_video, upload_thumbnail, delete_video
 
 
 def video_detail(request, video_id):
@@ -39,35 +38,20 @@ def video_upload(request):
     form = VideoUploadForm(request.POST, request.FILES)
     if form.is_valid():
         video_file = form.cleaned_data['video_file']
-        custom_thumbnail = request.POST.get("thumbnail_data", "")
+        thumbnail_file = form.cleaned_data.get('thumbnail')
 
         try:
-            result = upload_video(
-                file_data=video_file.read(),
-                file_name=video_file.name
-            )
-
-            thumbnail_url = ""
-            if custom_thumbnail and custom_thumbnail.startswith("data:image"):
-                try:
-                    base_name = video_file.name.rsplit(".", 1)[0]
-                    thumb_result = upload_thumbnail(
-                        file_data=custom_thumbnail,
-                        file_name=base_name + "_thumb.jpg"
-                    )
-                    thumbnail_url = thumb_result["url"]
-                except Exception as e:
-                    print(e)
-                    pass
-
             video = Video.objects.create(
                 user=request.user,
                 title=form.cleaned_data['title'],
                 description=form.cleaned_data['description'],
-                file_id=result["file_id"],
-                video_url=result["url"],
-                thumbnail_url=thumbnail_url,
+                video_file=video_file,
             )
+
+            # Handle thumbnail if provided
+            if thumbnail_file:
+                video.thumbnail = thumbnail_file
+                video.save()
 
             return JsonResponse({
                 "success": True,
@@ -78,7 +62,7 @@ def video_upload(request):
             return JsonResponse({"success": False, "error": str(e)})
 
     errors = []
-    for field, field_errors in forms.errors.items():
+    for field, field_errors in form.errors.items():
         for error in field_errors:
             errors.append(f"{field}: {error}" if field != "__all__" else error)
     return JsonResponse({"success": False, "errors": ";".join(errors)})
@@ -93,13 +77,6 @@ def video_upload_page(request):
 @require_POST
 def delete_video(request, video_id):
     video = get_object_or_404(Video, id=video_id, user=request.user)
-
-    try:
-        delete_video(video.file_id)
-    except Exception as e:
-        print(e)
-        pass
-
     video.delete()
 
     return JsonResponse({"success": True, "message": "video deleted"})

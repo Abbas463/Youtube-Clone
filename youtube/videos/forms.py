@@ -28,6 +28,13 @@ class VideoUploadForm(forms.Form):
             "accept": "video/*"
         })
     )
+    thumbnail = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            "class": "form-input",
+            "accept": "image/*"
+        })
+    )
 
     def clean_video_file(self):
         video = self.cleaned_data.get("video_file")

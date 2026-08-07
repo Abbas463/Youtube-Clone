@@ -14,7 +14,7 @@
 
 <div class="video-player-container">
     <div class="video-player">
-        <video id="video-player" controls preload="none" poster="{{ video.display_thumbnail_url }}"></video>
+        <video id="video-player" controls preload="none" {% if video.display_thumbnail_url %}poster="{{ video.display_thumbnail_url }}"{% endif %}></video>
         <div id="video-error" class="video-error" style="display: none;">
             <span class="error-icon">⚠</span>
             <p>Video Unavailable</p>
@@ -27,12 +27,19 @@
         <div class="video-stats">
             <span class="video-stats-left">{{ video.views }} views | {{ video.created_at|date:"M d, Y" }}</span>
             <div class="video-actions">
+                {% if user.is_authenticated %}
                 <button class="vote-btn {% if user_vote == 1 %}active{% endif %}" data-vote="like" onclick="vote({{ video.id }}, 'like')">
                     👍 <span id="like-count">{{ video.likes }}</span>
                 </button>
                 <button class="vote-btn {% if user_vote == -1 %}active{% endif %}" data-vote="dislike" onclick="vote({{ video.id }}, 'dislike')">
                     👎 <span id="dislike-count">{{ video.dislikes }}</span>
                 </button>
+                {% else %}
+                <div class="vote-stats">
+                    <span>👍 {{ video.likes }}</span>
+                    <span>👎 {{ video.dislikes }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -55,29 +62,13 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
 const videoPlayer = document.getElementById("video-player")
 const videoError = document.getElementById("video-error")
-const streamingUrl = '{{ video.streaming_url }}'
-const fallbackUrl = '{{ video.optimized_url }}'
+const videoUrl = '{{ video.video_url }}'
 
-if (Hls.isSupported()) {
-    const hls = new Hls({
-        startLevel: -1,
-        capLevelToPlayerSize: true
-    })
-    hls.loadSource(streamingUrl)
-    hls.attachMedia(videoPlayer)
-    hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.datal) {
-            videoPlayer.src = fallbackUrl
-        }
-    })
-} else if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
-    videoPlayer.src = streamingUrl
-} else {
-    videoPlayer.src = fallbackUrl
+if (videoUrl) {
+    videoPlayer.src = videoUrl
 }
 
 videoPlayer.addEventListener("error", () => {
@@ -98,11 +89,6 @@ function deleteVideo(videoId) {
 }
 
 function vote(videoId, voteType) {
-    {% if not user.is_authenticated %}
-    window.location.href = '{% url "accounts:login "%}'
-    return
-    {% endif %}
-
     fetch(`/${videoId}/vote/`, {
         method: "POST",
         headers: {

@@ -11,7 +11,7 @@
 {% block content %}
 <div class="upload-overlay" id="uploadOverlay">
     <div class="upload-progress-container">
-        <div class="upload=spinner"></div>
+        <div class="upload-spinner"></div>
         <h2 id="uploadStatus">Uploading Video...</h2>
         <p class="upload-warning">Please don't close this page</p>
     </div>
@@ -59,14 +59,13 @@
             </div>
 
             <div class="form-group">
-                <label for="customThumbnail">Thumbnail (optional)</label>
-                <label class="file-input-wrapper thumb-wrapper" for="customThumbnail">
+                <label for="id_thumbnail">Thumbnail (optional)</label>
+                <label class="file-input-wrapper thumb-wrapper" for="id_thumbnail">
                     <img id="thumbPreview">
                     <span id="thumb-label">Click to select a thumbnail</span>
                 </label>
-                <input type="file" id="customThumbnail" accept="image/*" style="display:none;"/>
-                <input type="hidden" name="thumbnail_data" id="thumbnailData"/>
-                <span class="help-text">Leave empty to auto-generate from your video</span>
+                <input type="file" name="thumbnail" id="id_thumbnail" accept="image/*" style="display:none;"/>
+                <span class="help-text">Leave empty to upload without thumbnail</span>
             </div>
 
             <button type="submit" class="btn-submit" id="submitBtn">Upload Video</button>
@@ -85,7 +84,7 @@ $("id_video_file").onchange = e => {
     $("video-label").textContent = file ? `${file.name}` : "Click to select a video file"
 }
 
-$("customThumbnail").onchange = e => {
+$("id_thumbnail").onchange = e => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader()
@@ -93,7 +92,6 @@ $("customThumbnail").onchange = e => {
         $("thumbPreview").src = ev.target.result
         $("thumbPreview").classList.add("visible")
         $("thumb-label").style.display = "none"
-        $("thumbnailData").value = ev.target.result;
     }
     reader.readAsDataURL(file)
 }
